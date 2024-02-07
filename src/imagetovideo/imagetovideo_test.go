@@ -3,11 +3,11 @@ package imagetovideo
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
-	"gocv.io/x/gocv"
 )
 
 func makeModule() *VideoManager {
@@ -56,51 +56,18 @@ func TestCanResizeImage(t *testing.T) {
 // }
 
 func TestCanMakeReversedVideo(t *testing.T) {
-	// given : 유효한 동영상
-	// when : 비디오 역재생 영상 요청
-	gerneratedVideoPath := "./img/generated_video.mp4"
 	reversedVideoPath := "./img/reversed_video.mp4"
 
 	err := os.Remove(reversedVideoPath)
 	if err != nil {
 		fmt.Println("Fail to delete", err)
 	}
+	// given : 유효한 동영상
+	// when : 비디오 역재생 영상 요청
 
-	// create video capture input file
-	cap, err := gocv.VideoCaptureFile(gerneratedVideoPath)
-	if err != nil {
-		fmt.Println("Can't capture input file.", err)
-	}
-	defer cap.Close()
+	vm := makeModule()
+	outputPath, _ := vm.makeReversedVideo()
 
-	// get the width, height and FPS of the video frame
-	frameWidth := int(cap.Get(gocv.VideoCaptureFrameWidth))
-	frameHeight := int(cap.Get(gocv.VideoCaptureFrameHeight))
-	fps := int(cap.Get(gocv.VideoCaptureFPS))
-
-	// create video capture out file
-	out, err := gocv.VideoWriterFile(reversedVideoPath, "mp4v", float64(fps), frameWidth, frameHeight, true)
-	if err != nil {
-		fmt.Println("Can't capture output file.", err)
-	}
-	defer out.Close()
-
-	var frames []gocv.Mat
-	for {
-		frame := gocv.NewMat()
-		if ok := cap.Read(&frame); !ok {
-			break
-		}
-		defer frame.Close()
-
-		frames = append(frames, frame.Clone())
-	}
-	for i := 0; i < len(frames); i++ {
-		out.Write(frames[i])
-	}
-
-	for i := len(frames) - 1; i >= 0; i-- {
-		out.Write(frames[i])
-	}
 	// then 비디오 확인
+	assert.True(t, filepath.Base(outputPath) == "reversed_video.mp4", "비디오 역 재생 파일이 정상적으로 생성되지 않았습니다.")
 }

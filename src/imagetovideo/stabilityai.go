@@ -47,6 +47,10 @@ func (vm *VideoManager) GenerateVideoContent() {
 	if err != nil {
 		fmt.Println("Get generate video error: ", err)
 	}
+	_, err = vm.makeReversedVideo()
+	if err != nil {
+		fmt.Println("Make reversed video error: ", err)
+	}
 }
 
 func (vm *VideoManager) resizeImage() (string, error) {
