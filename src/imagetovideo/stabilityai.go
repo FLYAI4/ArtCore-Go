@@ -24,7 +24,15 @@ func NewVideoManager(userFolderPath string) *VideoManager {
 	}
 }
 
-func (vm *VideoManager) ResizeImage() (string, error) {
+func (vm *VideoManager) GenerateVideoContent() {
+	// resize image to 768 * 768
+	_, err := vm.resizeImage()
+	if err != nil {
+		fmt.Println("Resize image error.", err)
+	}
+}
+
+func (vm *VideoManager) resizeImage() (string, error) {
 	filePath := filepath.Join(vm.userFolderPath, "origin_img.jpg")
 
 	// open local file
