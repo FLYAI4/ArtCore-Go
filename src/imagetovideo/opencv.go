@@ -7,6 +7,7 @@ import (
 	"gocv.io/x/gocv"
 )
 
+// Make long video with openCV
 func (vm *VideoManager) makeReversedVideo() (string, error) {
 	inputFilePath := filepath.Join(vm.userFolderPath, "generated_video.mp4")
 	outFilePath := filepath.Join(vm.userFolderPath, "reversed_video.mp4")

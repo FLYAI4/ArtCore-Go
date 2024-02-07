@@ -24,6 +24,7 @@ type VideoManager struct {
 	token          string
 }
 
+// NewVideoManager make VideomManager struct.
 func NewVideoManager(userFolderPath string, token string) *VideoManager {
 	return &VideoManager{
 		changeWidth:    768,
@@ -33,26 +34,31 @@ func NewVideoManager(userFolderPath string, token string) *VideoManager {
 	}
 }
 
+// Generate video content with StabilityAI and openCV.
 func (vm *VideoManager) GenerateVideoContent() {
 	// resize image to 768 * 768
 	_, err := vm.resizeImage()
 	if err != nil {
 		fmt.Println("Resize image error: ", err)
 	}
+	// post generated video to stability AI
 	id, err := vm.postGenerateVideo()
 	if err != nil {
 		fmt.Println("Post generate video error: ", err)
 	}
+	// get generated video from stability AI
 	_, err = vm.getGenerateVideo(id)
 	if err != nil {
 		fmt.Println("Get generate video error: ", err)
 	}
+	// make long reversed video to openCV
 	_, err = vm.makeReversedVideo()
 	if err != nil {
 		fmt.Println("Make reversed video error: ", err)
 	}
 }
 
+// Resize image to fit (768, 768)
 func (vm *VideoManager) resizeImage() (string, error) {
 	filePath := filepath.Join(vm.userFolderPath, "origin_img.jpg")
 
@@ -94,6 +100,7 @@ func (vm *VideoManager) resizeImage() (string, error) {
 	return filePath, nil
 }
 
+// Post generate video with stabilityAI
 func (vm *VideoManager) postGenerateVideo() (string, error) {
 	filePath := filepath.Join(vm.userFolderPath, "resized_img.jpg")
 
@@ -192,6 +199,7 @@ func (vm *VideoManager) postGenerateVideo() (string, error) {
 	return idStruct.ID, nil
 }
 
+// Get generate video with stabilityAI
 func (vm *VideoManager) getGenerateVideo(generatedID string) (string, error) {
 	filePath := filepath.Join(vm.userFolderPath, "generated_video.mp4")
 	deleteFile(filePath)
