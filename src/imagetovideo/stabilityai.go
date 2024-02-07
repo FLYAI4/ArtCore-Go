@@ -7,10 +7,12 @@ import (
 	"image"
 	"image/jpeg"
 	"io"
+	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/nfnt/resize"
 )
@@ -37,9 +39,13 @@ func (vm *VideoManager) GenerateVideoContent() {
 	if err != nil {
 		fmt.Println("Resize image error: ", err)
 	}
-	_, err = vm.postGenerateVideo()
+	id, err := vm.postGenerateVideo()
 	if err != nil {
 		fmt.Println("Post generate video error: ", err)
+	}
+	_, err = vm.getGenerateVideo(id)
+	if err != nil {
+		fmt.Println("Get generate video error: ", err)
 	}
 }
 
@@ -170,4 +176,60 @@ func (vm *VideoManager) postGenerateVideo() (string, error) {
 	}
 
 	return buf.String(), nil
+}
+
+func (vm *VideoManager) getGenerateVideo(generatedID string) (string, error) {
+	filePath := filepath.Join(vm.userFolderPath, "generated_video.mp4")
+
+	var flag int = 202
+	url := fmt.Sprintf("https://api.stability.ai/v2alpha/generation/image-to-video/result/%s", generatedID)
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println("Can't create new request.", err)
+		return "", err
+	}
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "")
+	request.Header.Set("authorization", vm.token)
+
+	for flag == 202 {
+		client := &http.Client{}
+		response, err := client.Do(request)
+		if err != nil {
+			fmt.Println("Can't request to get video.", err)
+			return "", err
+		}
+		defer response.Body.Close()
+
+		switch flag = response.StatusCode; flag {
+		case 200:
+			fmt.Println("Generation finish.")
+
+			// read video data
+			videoContent, err := ioutil.ReadAll(response.Body)
+			if err != nil {
+				fmt.Println("Can't read video content.", err)
+				return "", err
+			}
+
+			// write video file.
+			err = ioutil.WriteFile(filePath, videoContent, 0644)
+			if err != nil {
+				fmt.Println("Can't write video", err)
+				return "", err
+			}
+		case 202:
+			fmt.Println("Generation in-progress... automatically try again after 5 sec.")
+			time.Sleep(5 * time.Second)
+		default:
+			fmt.Println("Can't connect api.", err)
+			var errorMessage map[string]interface{}
+			err = json.NewDecoder(response.Body).Decode(&errorMessage)
+			if err != nil {
+				fmt.Println("Can't request with Non token", err)
+				return "", err
+			}
+		}
+	}
+	return filePath, nil
 }
