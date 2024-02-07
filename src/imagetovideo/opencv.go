@@ -10,6 +10,7 @@ import (
 func (vm *VideoManager) makeReversedVideo() (string, error) {
 	inputFilePath := filepath.Join(vm.userFolderPath, "generated_video.mp4")
 	outFilePath := filepath.Join(vm.userFolderPath, "reversed_video.mp4")
+	deleteFile(outFilePath)
 
 	// create video capture input file
 	cap, err := gocv.VideoCaptureFile(inputFilePath)
@@ -46,10 +47,12 @@ func (vm *VideoManager) makeReversedVideo() (string, error) {
 	// write forward play
 	for i := 0; i < len(frames); i++ {
 		out.Write(frames[i])
+		out.Write(frames[i])
 	}
 
 	// write backward play
 	for i := len(frames) - 1; i >= 0; i-- {
+		out.Write(frames[i])
 		out.Write(frames[i])
 	}
 

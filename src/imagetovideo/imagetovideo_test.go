@@ -32,36 +32,30 @@ func TestCanResizeImage(t *testing.T) {
 	assert.False(t, os.IsNotExist(err), "리사이즈된 파일이 정상적으로 생성되지 않았습니다.")
 }
 
-// func TestCanPostGenerateVideo(t *testing.T) {
-// 	// given : 유효한 토큰 + 이미지
-// 	// when : 비디오 생성 요청
-// 	vm := makeModule()
-// 	id, _ := vm.postGenerateVideo()
+func TestCanPostGenerateVideo(t *testing.T) {
+	// given : 유효한 토큰 + 이미지
+	// when : 비디오 생성 요청
+	vm := makeModule()
+	id, _ := vm.postGenerateVideo()
 
-// 	// then : 생성 요청 확인(generated_id)
-// 	fmt.Println("Generated id : ", id)
-// 	assert.True(t, len(id) > 0, "비디오 생성 요청이 정상적으로 수행 되지 않았습니다.")
-// }
+	// then : 생성 요청 확인(generated_id)
+	fmt.Println(id)
+	assert.True(t, len(id) > 0, "비디오 생성 요청이 정상적으로 수행 되지 않았습니다.")
+}
 
-// func TestCanGetGenerateVideo(t *testing.T) {
-// 	// given : generated_id
-// 	generatedID := "789de2faf74ef9b52512966bbcc32b23274fec293adea42f1cf995921aacfc3f"
+func TestCanGetGenerateVideo(t *testing.T) {
+	// given : generated_id
+	generatedID := ""
 
-// 	// when : 비디오 전달 요청
-// 	vm := makeModule()
-// 	generatedVideoPath, _ := vm.getGenerateVideo(generatedID)
+	// when : 비디오 전달 요청
+	vm := makeModule()
+	generatedVideoPath, _ := vm.getGenerateVideo(generatedID)
 
-// 	// then : 비디오 확인
-// 	assert.True(t, filepath.Base(generatedVideoPath) == "generated_video.mp4", "비디오 파일이 정상적으로 생성되지 않았습니다.")
-// }
+	// then : 비디오 확인
+	assert.True(t, filepath.Base(generatedVideoPath) == "generated_video.mp4", "비디오 파일이 정상적으로 생성되지 않았습니다.")
+}
 
 func TestCanMakeReversedVideo(t *testing.T) {
-	reversedVideoPath := "./img/reversed_video.mp4"
-
-	err := os.Remove(reversedVideoPath)
-	if err != nil {
-		fmt.Println("Fail to delete", err)
-	}
 	// given : 유효한 동영상
 	// when : 비디오 역재생 영상 요청
 
@@ -70,4 +64,10 @@ func TestCanMakeReversedVideo(t *testing.T) {
 
 	// then 비디오 확인
 	assert.True(t, filepath.Base(outputPath) == "reversed_video.mp4", "비디오 역 재생 파일이 정상적으로 생성되지 않았습니다.")
+}
+
+func TestCanGenerateVideoContent(t *testing.T) {
+	vm := makeModule()
+
+	vm.GenerateVideoContent()
 }

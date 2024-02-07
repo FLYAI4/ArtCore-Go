@@ -179,11 +179,22 @@ func (vm *VideoManager) postGenerateVideo() (string, error) {
 		fmt.Println("Can't read response body.", err)
 	}
 
-	return buf.String(), nil
+	// decode JSON data into a structure.
+	var idStruct struct {
+		ID string `json:"id"`
+	}
+	err = json.Unmarshal(buf.Bytes(), &idStruct)
+	if err != nil {
+		fmt.Println("JSON 디코딩 실패:", err)
+		return "", err
+	}
+
+	return idStruct.ID, nil
 }
 
 func (vm *VideoManager) getGenerateVideo(generatedID string) (string, error) {
 	filePath := filepath.Join(vm.userFolderPath, "generated_video.mp4")
+	deleteFile(filePath)
 
 	var flag int = 202
 	url := fmt.Sprintf("https://api.stability.ai/v2alpha/generation/image-to-video/result/%s", generatedID)
@@ -236,4 +247,13 @@ func (vm *VideoManager) getGenerateVideo(generatedID string) (string, error) {
 		}
 	}
 	return filePath, nil
+}
+
+func deleteFile(path string) {
+	if _, err := os.Stat(path); err == nil {
+		err := os.Remove(path)
+		if err != nil {
+			fmt.Println("Fail to delete", err)
+		}
+	}
 }
