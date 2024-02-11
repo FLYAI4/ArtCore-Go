@@ -1,6 +1,137 @@
 package focuspoint
 
-import "testing"
+import (
+	"bytes"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/joho/godotenv"
+)
+
+type FocusPointManager struct {
+	userFolderPath string
+	token          string
+}
+
+func NewFocusPointManager(userFolderPath string, token string) *FocusPointManager {
+	return &FocusPointManager{
+		userFolderPath: userFolderPath,
+		token:          token,
+	}
+}
+
+func makeModule() *FocusPointManager {
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("Error loading.")
+	}
+
+	token := os.Getenv("OPEN_AI_KEY")
+	fpm := NewFocusPointManager("./img", token)
+	return fpm
+}
+
+func makePrompt() string {
+	promtText := []string{
+		"You are an expert art historian with vast knowledge about artists throughout history who revolutionized their craft.",
+		"You will begin by briefly summarizing the personal life and achievements of the artist.",
+		"Then you will go on to explain the medium, style, and influences of their works.",
+		"Then you will provide short descriptions of what they depict and any notable characteristics they might have.",
+		"Fianlly identify THREE keywords in the picture and provide each coordinate of the keywords in the last sentence.",
+		"For example, Give the coordinate value of the keywords in json format such as if the keyword is Pretty_woman, ```json{\"pretty_woman\", [[x0,y0,x1,y1]]}```, or if there are multiple coordinates, keyword coordinates in json format such as ```json{\"pretty_woman\":[[x0,y0,x1,y1], [x2,y2,x3,y3]]}```",
+		"The values ​​entered in x0, y0, x1, y1 are unconditionally the coordinate values ​​of each keyword.",
+	}
+	return strings.Join(promtText, " ")
+}
+
+func TestCanGetGenerateContent(t *testing.T) {
+	// given : 유효한 이미지 + 토큰 있는 경우
+	// when : 생성 요청
+
+	// open file
+	filePath := filepath.Join("./img", "origin_img.jpg")
+	file, err := os.Open(filePath)
+	if err != nil {
+		fmt.Println("Can't open the file.", err)
+	}
+	defer file.Close()
+
+	// read file
+	imageData, err := ioutil.ReadAll(file)
+	if err != nil {
+		fmt.Println("Can't read the file.", err)
+	}
+
+	// encode Base64
+	encodedImage := base64.StdEncoding.EncodeToString(imageData)
+
+	// make json data
+	requestData := map[string]interface{}{
+		"model": "gpt-4-vision-preview",
+		"messages": []interface{}{
+			map[string]interface{}{
+				"role": "user",
+				"content": []interface{}{
+					map[string]interface{}{
+						"type": "text",
+						"text": makePrompt(),
+					},
+					map[string]interface{}{
+						"type": "image_url",
+						"image_url": map[string]interface{}{
+							"url": fmt.Sprintf("data:image/jpeg;base64,%s", encodedImage),
+						},
+					},
+				},
+			},
+		},
+		"max_tokens": 800,
+	}
+	jsonData, err := json.Marshal(requestData)
+	if err != nil {
+		fmt.Println("Can't make json data.")
+	}
+
+	// make request
+	url := "https://api.openai.com/v1/chat/completions"
+	request, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Println("Can't make request")
+	}
+
+	// set request headers
+	err = godotenv.Load()
+	if err != nil {
+		fmt.Println("Error loading.")
+	}
+
+	token := os.Getenv("OPEN_AI_KEY")
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+token)
+
+	// post request
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		fmt.Println("Can't request to openAI")
+	}
+	defer response.Body.Close()
+
+	responseData, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		fmt.Println("Can't read reponse body.")
+	}
+	fmt.Println("Response: ", string(responseData))
+
+	// then : 생성된 콘텐츠
+}
 
 func TestCannotGetGenerateContentWithNoImage(t *testing.T) {
 	// given : 이미지 데이터가 없는 경우
@@ -18,26 +149,18 @@ func TestCannotGetGenerateContentWithNoToken(t *testing.T) {
 	// then : 에러 발생
 }
 
-func TestCanGetGenerateContent(t *testing.T) {
-	// given : 유효한 이미지 + 토큰 있는 경우
-
-	// when : 생성 요청
-
-	// then : 생성된 콘텐츠
-}
-
 func TestCanRefineContent(t *testing.T) {
-	// given : 
-
-	// when : 
-
-	// then : 
-}
-
-func TestCanGenerateContentAndCoordValue(t *testing.T)) {
-	// given : 
+	// given :
 
 	// when :
 
-	// then : 
+	// then :
+}
+
+func TestCanGenerateContentAndCoordValue(t *testing.T) {
+	// given :
+
+	// when :
+
+	// then :
 }
