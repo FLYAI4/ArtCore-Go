@@ -106,7 +106,6 @@ func (fpm *FocusPointManager) postGenerateContent() (interface{}, error) {
 		fmt.Println("Can't read reponse body.", err)
 		return "", err
 	}
-
 	// parse json data
 	var data map[string]interface{}
 	if err := json.Unmarshal(responseData, &data); err != nil {
