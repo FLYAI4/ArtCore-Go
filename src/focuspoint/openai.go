@@ -24,6 +24,28 @@ func NewFocusPointManager(userFolderPath string, token string) *FocusPointManage
 	}
 }
 
+func (fpm *FocusPointManager) GenerateFocusPointContent() {
+	content, err := fpm.postGenerateContent()
+	if err != nil {
+		fmt.Println("Post generateContent error: ", err)
+	}
+
+	mainContent, err := fpm.refineMainContent(content)
+	if err != nil {
+		fmt.Println("Refine mainContent error: ", err)
+	}
+	// TODO: mainContent 전송(byte 타입으로)
+	fmt.Println(mainContent)
+
+	coorContent, err := fpm.refineCoordContent(content, mainContent)
+	if err != nil {
+		fmt.Println("Refine coordContent error: ", err)
+	}
+	// TODO: coordContent 전송
+	fmt.Println(string(coorContent))
+
+}
+
 func (fpm *FocusPointManager) postGenerateContent() (string, error) {
 	// open file
 	filePath := filepath.Join(fpm.userFolderPath, "origin_img.jpg")
@@ -129,7 +151,7 @@ func (fpm *FocusPointManager) refineMainContent(content string) (string, error) 
 	// filter words
 	words := []string{"cannot", "AI", "do not", "can't", "json", "JSON", "{", "Unfortunately", "coordinates", "However", "keyword", "keywords"}
 	filteredMainContent := filterSentences(mainContent, words)
-	// TODO : filteredMainContent 전송
+	// TODO : filteredMainContent 전송(byte 타입으로)
 	return filteredMainContent, nil
 }
 
@@ -138,6 +160,7 @@ func (fpm *FocusPointManager) refineCoordContent(content string, filteredMainCon
 	startIndex := strings.Index(content, "```json")
 	if startIndex == -1 {
 		fmt.Println("Start index not found.")
+		return nil, fmt.Errorf("no json format error")
 	}
 	startIndex += 7
 
@@ -145,6 +168,7 @@ func (fpm *FocusPointManager) refineCoordContent(content string, filteredMainCon
 	endIndex := strings.Index(content[startIndex:], "```")
 	if endIndex == -1 {
 		fmt.Println("End index not found")
+		return nil, fmt.Errorf("no json format error")
 	}
 
 	// decode json
