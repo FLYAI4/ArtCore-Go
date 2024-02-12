@@ -88,21 +88,29 @@ func (fpm *FocusPointManager) postGenerateContent() (interface{}, error) {
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
-		fmt.Println("Can't request to openAI")
+		fmt.Println("Can't request to OpenAI", err)
 		return "", err
 	}
 	defer response.Body.Close()
 
+	if response.StatusCode == 400 {
+		fmt.Println("Can't request to OpenAI with non image.")
+		return "", fmt.Errorf("non image")
+	} else if response.StatusCode == 404 {
+		fmt.Println("Can't request to OpenAI with non token.")
+		return "", fmt.Errorf("non token")
+	}
+
 	responseData, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		fmt.Println("Can't read reponse body.")
+		fmt.Println("Can't read reponse body.", err)
 		return "", err
 	}
 
 	// parse json data
 	var data map[string]interface{}
 	if err := json.Unmarshal(responseData, &data); err != nil {
-		fmt.Println("Can't parse json data.")
+		fmt.Println("Can't parse json data.", err)
 		return "", err
 	}
 	// ['choices'][0]["message"]["content"]

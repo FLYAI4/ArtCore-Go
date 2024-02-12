@@ -32,20 +32,22 @@ func TestCanPostGenerateContent(t *testing.T) {
 	fmt.Println(generatedContent)
 }
 
-func TestCannotPostGenerateContentWithNoImage(t *testing.T) {
-	// given : 이미지 데이터가 없는 경우
-
-	// when : 생성 요청
-
-	// then : 에러 발생
-}
-
 func TestCannotPostGenerateContentWithNoToken(t *testing.T) {
 	// given : 토큰이 없는 경우
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("Error loading.")
+	}
+
+	token := os.Getenv("OPEN_AI_WRONG_KEY")
+	fpm := NewFocusPointManager("./img", token)
 
 	// when : 생성 요청
+	generatedContent, err := fpm.postGenerateContent()
 
 	// then : 에러 발생
+	assert.True(t, generatedContent == "", "예외가 정상적으로 처리되지 않았습니다.")
+	assert.Equal(t, err, fmt.Errorf("non token"), "에러 메시지가 정상적으로 처리되지 않았습니다.")
 }
 
 func TestCanRefineContent(t *testing.T) {
