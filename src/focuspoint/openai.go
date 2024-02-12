@@ -117,6 +117,41 @@ func (fpm *FocusPointManager) postGenerateContent() (interface{}, error) {
 	return messageContent, nil
 }
 
+func (fpm *FocusPointManager) refineContent(content string) (string, error) {
+	// find main content
+	splitContent := strings.Split(content, ":")
+	if len(splitContent) == 0 {
+		fmt.Println("Can't split data")
+		return "", fmt.Errorf("non split content")
+	}
+	mainContent := strings.TrimSpace(splitContent[0])
+
+	// filter words
+	words := []string{"cannot", "AI", "do not", "can't", "json", "JSON", "{", "Unfortunately", "coordinates", "However", "keyword", "keywords"}
+	filteredMainContent := filterSentences(mainContent, words)
+	// TODO : filteredMainContent 전송
+	return filteredMainContent, nil
+}
+
+func filterSentences(content string, words []string) string {
+	var filteredSentences []string
+
+	sentences := strings.Split(content, ".")
+OuterLoop:
+	for _, sentence := range sentences {
+		sentence = strings.TrimSpace(sentence)
+		for _, word := range words {
+			if strings.Contains(sentence, word) {
+				continue OuterLoop
+			}
+		}
+		filteredSentences = append(filteredSentences, sentence)
+	}
+
+	result := strings.Join(filteredSentences, ". ")
+	return result
+}
+
 func makePrompt() string {
 	promtText := []string{
 		"You are an expert art historian with vast knowledge about artists throughout history who revolutionized their craft.",
