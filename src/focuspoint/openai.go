@@ -24,7 +24,7 @@ func NewFocusPointManager(userFolderPath string, token string) *FocusPointManage
 	}
 }
 
-func (fpm *FocusPointManager) postGenerateContent() (interface{}, error) {
+func (fpm *FocusPointManager) postGenerateContent() (string, error) {
 	// open file
 	filePath := filepath.Join(fpm.userFolderPath, "origin_img.jpg")
 	file, err := os.Open(filePath)
@@ -114,10 +114,10 @@ func (fpm *FocusPointManager) postGenerateContent() (interface{}, error) {
 	}
 	// ['choices'][0]["message"]["content"]
 	messageContent := data["choices"].([]interface{})[0].(map[string]interface{})["message"].(map[string]interface{})["content"]
-	return messageContent, nil
+	return messageContent.(string), nil
 }
 
-func (fpm *FocusPointManager) refineContent(content string) (string, error) {
+func (fpm *FocusPointManager) refineMainContent(content string) (string, error) {
 	// find main content
 	splitContent := strings.Split(content, ":")
 	if len(splitContent) == 0 {
@@ -131,6 +131,64 @@ func (fpm *FocusPointManager) refineContent(content string) (string, error) {
 	filteredMainContent := filterSentences(mainContent, words)
 	// TODO : filteredMainContent 전송
 	return filteredMainContent, nil
+}
+
+func (fpm *FocusPointManager) refineCoordContent(content string, filteredMainContent string) ([]byte, error) {
+	// find start
+	startIndex := strings.Index(content, "```json")
+	if startIndex == -1 {
+		fmt.Println("Start index not found.")
+	}
+	startIndex += 7
+
+	// find end
+	endIndex := strings.Index(content[startIndex:], "```")
+	if endIndex == -1 {
+		fmt.Println("End index not found")
+	}
+
+	// decode json
+	jsonStr := content[startIndex : startIndex+endIndex]
+	jsonStr = strings.ReplaceAll(jsonStr, "\n", "")
+	var jsonData map[string]interface{}
+	if err := json.Unmarshal([]byte(jsonStr), &jsonData); err != nil {
+		fmt.Println("Error decoding JSON:", err)
+		return nil, err
+	}
+
+	// make coord content
+	changeJsonData := make(map[string]interface{})
+	for key, value := range jsonData {
+		changeJsonData[key] = map[string]interface{}{
+			"content": findCoordContent(key, filteredMainContent),
+			"coord":   value,
+		}
+	}
+
+	changedJSONBytes, err := json.MarshalIndent(changeJsonData, "", "  ")
+	if err != nil {
+		fmt.Println("Error encoding JSON:", err)
+		return nil, err
+	}
+	return changedJSONBytes, nil
+
+}
+
+func findCoordContent(key string, filteredMainContent string) string {
+	var coordSentences []string
+
+	parts := strings.Split(key, "_")
+	lastPart := parts[len(parts)-1]
+
+	sentences := strings.Split(filteredMainContent, ".")
+	for _, sentence := range sentences {
+		if strings.Contains(sentence, lastPart) {
+			coordSentences = append(coordSentences, sentence)
+		}
+	}
+
+	result := strings.Join(coordSentences, ". ")
+	return result
 }
 
 func filterSentences(content string, words []string) string {
