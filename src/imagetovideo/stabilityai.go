@@ -12,9 +12,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/nfnt/resize"
+	"github.com/robert-min/ArtCore-Go/src/pb"
 )
 
 type VideoManager struct {
@@ -35,7 +37,7 @@ func NewVideoManager(userFolderPath string, token string) *VideoManager {
 }
 
 // Generate video content with StabilityAI and openCV.
-func (vm *VideoManager) GenerateVideoContent() {
+func (vm *VideoManager) GenerateVideoContent(wg *sync.WaitGroup, stream pb.StreamService_GeneratedContentStreamServer) {
 	// resize image to 768 * 768
 	_, err := vm.resizeImage()
 	if err != nil {
@@ -52,10 +54,23 @@ func (vm *VideoManager) GenerateVideoContent() {
 		fmt.Println("Get generate video error: ", err)
 	}
 	// make long reversed video to openCV
-	_, err = vm.makeReversedVideo()
+	outFilePath, err := vm.makeReversedVideo()
 	if err != nil {
 		fmt.Println("Make reversed video error: ", err)
 	}
+
+	// read video to byte
+	videoBytes, err := os.ReadFile(outFilePath)
+	if err != nil {
+		fmt.Println("Failed to read video error: ", err)
+	}
+
+	// send: video content
+	if err := stream.Send(&pb.Response{Tag: "video", Data: videoBytes}); err != nil {
+		fmt.Println("Failed to send response: ", err)
+	}
+
+	wg.Done()
 }
 
 // Resize image to fit (768, 768)

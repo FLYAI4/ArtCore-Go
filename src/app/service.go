@@ -8,6 +8,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/robert-min/ArtCore-Go/src/focuspoint"
+	"github.com/robert-min/ArtCore-Go/src/imagetovideo"
 	"github.com/robert-min/ArtCore-Go/src/pb"
 )
 
@@ -24,7 +25,7 @@ func (s *server) GeneratedContentStream(req *pb.Request, stream pb.StreamService
 	}
 
 	openAiToken := os.Getenv("OPEN_AI_KEY")
-	// stabilityAiToken := os.Getenv("STABILITY_AI_TOKEN_KEY")
+	stabilityAiToken := os.Getenv("STABILITY_AI_TOKEN_KEY")
 
 	// make folder
 	storagePath := "./storage"
@@ -49,11 +50,16 @@ func (s *server) GeneratedContentStream(req *pb.Request, stream pb.StreamService
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(1)
+	wg.Add(2)
 
 	// generate focus point content
 	fpm := focuspoint.NewFocusPointManager(userFolderPath, openAiToken)
 	go fpm.GenerateFocusPointContent(&wg, stream)
+
+	// generate image to video content
+	vm := imagetovideo.NewVideoManager(userFolderPath, stabilityAiToken)
+	go vm.GenerateVideoContent(&wg, stream)
+
 	wg.Wait()
 
 	return nil
