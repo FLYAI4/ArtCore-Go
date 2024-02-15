@@ -29,7 +29,7 @@ func TestFocusPointStream(t *testing.T) {
 	request := &pb.Request{Image: testImgBytes, Id: "test1234"}
 
 	// when : focus point 요청
-	stream, err := client.FocusPointStream(context.Background(), request)
+	stream, err := client.GeneratedContentStream(context.Background(), request)
 	if err != nil {
 		t.Fatalf("Failed to request stream. : %v", err)
 	}

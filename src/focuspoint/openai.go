@@ -24,7 +24,7 @@ func NewFocusPointManager(userFolderPath string, token string) *FocusPointManage
 	}
 }
 
-func (fpm *FocusPointManager) GenerateFocusPointContent() {
+func (fpm *FocusPointManager) GenerateFocusPointContent() string {
 	content, err := fpm.postGenerateContent()
 	if err != nil {
 		fmt.Println("Post generateContent error: ", err)
@@ -42,7 +42,7 @@ func (fpm *FocusPointManager) GenerateFocusPointContent() {
 		fmt.Println("Refine coordContent error: ", err)
 	}
 	// TODO: coordContent 전송
-	fmt.Println(string(coorContent))
+	return string(coorContent)
 
 }
 

@@ -6,7 +6,7 @@ option go_package = "../pb";
 
 message Request {
     bytes image = 1;
-    string path = 2;
+    string id = 2;
 }
 
 message Response {
@@ -16,8 +16,5 @@ message Response {
 
 service StreamService {
     // Focus point method
-    rpc FocusPointStream(Request) returns (stream Response) {}
-
-    // image to video method
-    rpc ImageToVideoStream(Request) returns (stream Response) {}
+    rpc GeneratedContentStream(Request) returns (stream Response) {}
 }

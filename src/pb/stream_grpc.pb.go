@@ -19,8 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	StreamService_FocusPointStream_FullMethodName   = "/pb.StreamService/FocusPointStream"
-	StreamService_ImageToVideoStream_FullMethodName = "/pb.StreamService/ImageToVideoStream"
+	StreamService_GeneratedContentStream_FullMethodName = "/pb.StreamService/GeneratedContentStream"
 )
 
 // StreamServiceClient is the client API for StreamService service.
@@ -28,9 +27,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type StreamServiceClient interface {
 	// Focus point method
-	FocusPointStream(ctx context.Context, in *Request, opts ...grpc.CallOption) (StreamService_FocusPointStreamClient, error)
-	// image to video method
-	ImageToVideoStream(ctx context.Context, in *Request, opts ...grpc.CallOption) (StreamService_ImageToVideoStreamClient, error)
+	GeneratedContentStream(ctx context.Context, in *Request, opts ...grpc.CallOption) (StreamService_GeneratedContentStreamClient, error)
 }
 
 type streamServiceClient struct {
@@ -41,12 +38,12 @@ func NewStreamServiceClient(cc grpc.ClientConnInterface) StreamServiceClient {
 	return &streamServiceClient{cc}
 }
 
-func (c *streamServiceClient) FocusPointStream(ctx context.Context, in *Request, opts ...grpc.CallOption) (StreamService_FocusPointStreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, &StreamService_ServiceDesc.Streams[0], StreamService_FocusPointStream_FullMethodName, opts...)
+func (c *streamServiceClient) GeneratedContentStream(ctx context.Context, in *Request, opts ...grpc.CallOption) (StreamService_GeneratedContentStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &StreamService_ServiceDesc.Streams[0], StreamService_GeneratedContentStream_FullMethodName, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &streamServiceFocusPointStreamClient{stream}
+	x := &streamServiceGeneratedContentStreamClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -56,48 +53,16 @@ func (c *streamServiceClient) FocusPointStream(ctx context.Context, in *Request,
 	return x, nil
 }
 
-type StreamService_FocusPointStreamClient interface {
+type StreamService_GeneratedContentStreamClient interface {
 	Recv() (*Response, error)
 	grpc.ClientStream
 }
 
-type streamServiceFocusPointStreamClient struct {
+type streamServiceGeneratedContentStreamClient struct {
 	grpc.ClientStream
 }
 
-func (x *streamServiceFocusPointStreamClient) Recv() (*Response, error) {
-	m := new(Response)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *streamServiceClient) ImageToVideoStream(ctx context.Context, in *Request, opts ...grpc.CallOption) (StreamService_ImageToVideoStreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, &StreamService_ServiceDesc.Streams[1], StreamService_ImageToVideoStream_FullMethodName, opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &streamServiceImageToVideoStreamClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type StreamService_ImageToVideoStreamClient interface {
-	Recv() (*Response, error)
-	grpc.ClientStream
-}
-
-type streamServiceImageToVideoStreamClient struct {
-	grpc.ClientStream
-}
-
-func (x *streamServiceImageToVideoStreamClient) Recv() (*Response, error) {
+func (x *streamServiceGeneratedContentStreamClient) Recv() (*Response, error) {
 	m := new(Response)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -110,9 +75,7 @@ func (x *streamServiceImageToVideoStreamClient) Recv() (*Response, error) {
 // for forward compatibility
 type StreamServiceServer interface {
 	// Focus point method
-	FocusPointStream(*Request, StreamService_FocusPointStreamServer) error
-	// image to video method
-	ImageToVideoStream(*Request, StreamService_ImageToVideoStreamServer) error
+	GeneratedContentStream(*Request, StreamService_GeneratedContentStreamServer) error
 	mustEmbedUnimplementedStreamServiceServer()
 }
 
@@ -120,11 +83,8 @@ type StreamServiceServer interface {
 type UnimplementedStreamServiceServer struct {
 }
 
-func (UnimplementedStreamServiceServer) FocusPointStream(*Request, StreamService_FocusPointStreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method FocusPointStream not implemented")
-}
-func (UnimplementedStreamServiceServer) ImageToVideoStream(*Request, StreamService_ImageToVideoStreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method ImageToVideoStream not implemented")
+func (UnimplementedStreamServiceServer) GeneratedContentStream(*Request, StreamService_GeneratedContentStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method GeneratedContentStream not implemented")
 }
 func (UnimplementedStreamServiceServer) mustEmbedUnimplementedStreamServiceServer() {}
 
@@ -139,45 +99,24 @@ func RegisterStreamServiceServer(s grpc.ServiceRegistrar, srv StreamServiceServe
 	s.RegisterService(&StreamService_ServiceDesc, srv)
 }
 
-func _StreamService_FocusPointStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _StreamService_GeneratedContentStream_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(Request)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(StreamServiceServer).FocusPointStream(m, &streamServiceFocusPointStreamServer{stream})
+	return srv.(StreamServiceServer).GeneratedContentStream(m, &streamServiceGeneratedContentStreamServer{stream})
 }
 
-type StreamService_FocusPointStreamServer interface {
+type StreamService_GeneratedContentStreamServer interface {
 	Send(*Response) error
 	grpc.ServerStream
 }
 
-type streamServiceFocusPointStreamServer struct {
+type streamServiceGeneratedContentStreamServer struct {
 	grpc.ServerStream
 }
 
-func (x *streamServiceFocusPointStreamServer) Send(m *Response) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func _StreamService_ImageToVideoStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(Request)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(StreamServiceServer).ImageToVideoStream(m, &streamServiceImageToVideoStreamServer{stream})
-}
-
-type StreamService_ImageToVideoStreamServer interface {
-	Send(*Response) error
-	grpc.ServerStream
-}
-
-type streamServiceImageToVideoStreamServer struct {
-	grpc.ServerStream
-}
-
-func (x *streamServiceImageToVideoStreamServer) Send(m *Response) error {
+func (x *streamServiceGeneratedContentStreamServer) Send(m *Response) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -190,13 +129,8 @@ var StreamService_ServiceDesc = grpc.ServiceDesc{
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "FocusPointStream",
-			Handler:       _StreamService_FocusPointStream_Handler,
-			ServerStreams: true,
-		},
-		{
-			StreamName:    "ImageToVideoStream",
-			Handler:       _StreamService_ImageToVideoStream_Handler,
+			StreamName:    "GeneratedContentStream",
+			Handler:       _StreamService_GeneratedContentStream_Handler,
 			ServerStreams: true,
 		},
 	},

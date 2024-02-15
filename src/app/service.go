@@ -14,37 +14,34 @@ type server struct {
 	pb.StreamServiceServer
 }
 
-func (s *server) FocusPointStream(req *pb.Request, stream pb.StreamService_FocusPointStreamServer) error {
-	// 환경변수
+func (s *server) GeneratedContentStream(req *pb.Request, stream pb.StreamService_GeneratedContentStreamServer) error {
+	// get env
 	err := godotenv.Load()
 	if err != nil {
 		fmt.Println("Error to load env.")
+		return nil
 	}
 
-	// get env
 	openAiToken := os.Getenv("OPEN_AI_KEY")
 	// stabilityAiToken := os.Getenv("STABILITY_AI_TOKEN_KEY")
 
-	// TODO : storage 폴더 생성
+	// make folder
 	storagePath := "./storage"
 	userFolderPath := filepath.Join(storagePath, req.Id)
 
-	if _, err := os.Stat(storagePath); os.IsNotExist(err) {
-		err := os.Mkdir(storagePath, 0755)
-		if err != nil {
-			fmt.Println("Error to make storage folder. : ", err)
-			return err
-		}
+	err = makeFolder(storagePath)
+	if err != nil {
+		fmt.Println("Error to make folder. : ", err)
+		return err
 	}
-	// TODO : storage/id 폴더 생성
-	if _, err := os.Stat(userFolderPath); os.IsNotExist(err) {
-		err := os.Mkdir(userFolderPath, 0755)
-		if err != nil {
-			fmt.Println("Error to make storage folder. : ", err)
-			return err
-		}
+
+	err = makeFolder(userFolderPath)
+	if err != nil {
+		fmt.Println("Error to make folder. : ", err)
+		return err
 	}
-	// TODO : image 파일 storage/id 폴더 경로에 저장
+
+	// save image to storage/{id}/origin_img.jpg
 	err = os.WriteFile(filepath.Join(userFolderPath, "origin_img.jpg"), req.Image, 0644)
 	if err != nil {
 		fmt.Println("Error to wirte image. : ", err)
@@ -57,6 +54,16 @@ func (s *server) FocusPointStream(req *pb.Request, stream pb.StreamService_Focus
 	if err := stream.Send(&pb.Response{Tag: "focus", Data: response}); err != nil {
 		fmt.Println("Failed to send response: ", err)
 		return err
+	}
+	return nil
+}
+
+func makeFolder(folderPath string) error {
+	if _, err := os.Stat(folderPath); os.IsNotExist(err) {
+		err := os.Mkdir(folderPath, 0755)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
