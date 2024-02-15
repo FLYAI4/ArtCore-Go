@@ -21,5 +21,6 @@ func StreamController() {
 	fmt.Println("Server is listening on port 50051...")
 	if err := grpcServer.Serve(lis); err != nil {
 		fmt.Println("Failed to serve: ", err)
+		return
 	}
 }

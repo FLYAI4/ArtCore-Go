@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/joho/godotenv"
 	"github.com/robert-min/ArtCore-Go/src/focuspoint"
@@ -47,14 +48,14 @@ func (s *server) GeneratedContentStream(req *pb.Request, stream pb.StreamService
 		fmt.Println("Error to wirte image. : ", err)
 	}
 
-	// TODO : focuspoint main content stream
-	// TODO : focuspoint coord content stream(각각 함 수 분리?)
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	// generate focus point content
 	fpm := focuspoint.NewFocusPointManager(userFolderPath, openAiToken)
-	response := fpm.GenerateFocusPointContent()
-	if err := stream.Send(&pb.Response{Tag: "focus", Data: response}); err != nil {
-		fmt.Println("Failed to send response: ", err)
-		return err
-	}
+	go fpm.GenerateFocusPointContent(&wg, stream)
+	wg.Wait()
+
 	return nil
 }
 

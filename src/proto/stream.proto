@@ -11,7 +11,7 @@ message Request {
 
 message Response {
     string tag = 1;
-    string data = 2;
+    bytes data = 2;
 }
 
 service StreamService {

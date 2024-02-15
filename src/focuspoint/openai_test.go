@@ -101,8 +101,8 @@ func TestCanRefindCoordContent(t *testing.T) {
 	assert.True(t, len(coordContent) > 0, "컨텐츠가 정상적으로 생성되지 않았습니다.")
 }
 
-func TestCanGenerateFocusPointContent(t *testing.T) {
-	fpm := makeModule()
+// func TestCanGenerateFocusPointContent(t *testing.T) {
+// 	fpm := makeModule()
 
-	fpm.GenerateFocusPointContent()
-}
+// 	fpm.GenerateFocusPointContent()
+// }
