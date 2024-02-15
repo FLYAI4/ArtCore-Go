@@ -44,6 +44,7 @@ func (s *server) GeneratedContentStream(req *pb.Request, stream pb.StreamService
 	}
 
 	// save image to storage/{id}/origin_img.jpg
+	fmt.Printf("Image %s\n", string(req.Image))
 	err = os.WriteFile(filepath.Join(userFolderPath, "origin_img.jpg"), req.Image, 0644)
 	if err != nil {
 		fmt.Println("Error to wirte image. : ", err)

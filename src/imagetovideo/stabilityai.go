@@ -7,7 +7,6 @@ import (
 	"image"
 	"image/jpeg"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -44,31 +43,33 @@ func (vm *VideoManager) GenerateVideoContent(wg *sync.WaitGroup, stream pb.Strea
 		fmt.Println("Resize image error: ", err)
 	}
 	// post generated video to stability AI
-	id, err := vm.postGenerateVideo()
+	_, err = vm.postGenerateVideo()
 	if err != nil {
 		fmt.Println("Post generate video error: ", err)
 	}
-	// get generated video from stability AI
-	_, err = vm.getGenerateVideo(id)
-	if err != nil {
-		fmt.Println("Get generate video error: ", err)
-	}
-	// make long reversed video to openCV
-	outFilePath, err := vm.makeReversedVideo()
-	if err != nil {
-		fmt.Println("Make reversed video error: ", err)
-	}
 
+	// // get generated video from stability AI
+	// _, err = vm.getGenerateVideo(id)
+	// if err != nil {
+	// 	fmt.Println("Get generate video error: ", err)
+	// }
+	// // make long reversed video to openCV
+	// _, err = vm.makeReversedVideo()
+	// if err != nil {
+	// 	fmt.Println("Make reversed video error: ", err)
+	// }
+
+	// TODO : send video 별도 api로 수정
 	// read video to byte
-	videoBytes, err := os.ReadFile(outFilePath)
-	if err != nil {
-		fmt.Println("Failed to read video error: ", err)
-	}
+	// videoBytes, err := os.ReadFile(outFilePath)
+	// if err != nil {
+	// 	fmt.Println("Failed to read video error: ", err)
+	// }
 
-	// send: video content
-	if err := stream.Send(&pb.Response{Tag: "video", Data: videoBytes}); err != nil {
-		fmt.Println("Failed to send response: ", err)
-	}
+	// // send: video content
+	// if err := stream.Send(&pb.Response{Tag: "video", Data: []byte("finished")}); err != nil {
+	// 	fmt.Println("Failed to send response: ", err)
+	// }
 
 	wg.Done()
 }
@@ -244,14 +245,14 @@ func (vm *VideoManager) getGenerateVideo(generatedID string) (string, error) {
 			fmt.Println("Generation finish.")
 
 			// read video data
-			videoContent, err := ioutil.ReadAll(response.Body)
+			videoContent, err := io.ReadAll(response.Body)
 			if err != nil {
 				fmt.Println("Can't read video content.", err)
 				return "", err
 			}
 
 			// write video file.
-			err = ioutil.WriteFile(filePath, videoContent, 0644)
+			err = os.WriteFile(filePath, videoContent, 0644)
 			if err != nil {
 				fmt.Println("Can't write video", err)
 				return "", err

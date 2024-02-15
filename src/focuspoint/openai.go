@@ -125,7 +125,7 @@ func (fpm *FocusPointManager) postGenerateContent() (string, error) {
 	if response.StatusCode == 400 {
 		fmt.Println("Can't request to OpenAI with non image.")
 		return "", fmt.Errorf("non image")
-	} else if response.StatusCode == 404 {
+	} else if response.StatusCode == 429 {
 		fmt.Println("Can't request to OpenAI with non token.")
 		return "", fmt.Errorf("non token")
 	}
@@ -141,9 +141,20 @@ func (fpm *FocusPointManager) postGenerateContent() (string, error) {
 		fmt.Println("Can't parse json data.", err)
 		return "", err
 	}
+
 	// ['choices'][0]["message"]["content"]
-	messageContent := data["choices"].([]interface{})[0].(map[string]interface{})["message"].(map[string]interface{})["content"]
-	return messageContent.(string), nil
+	messageContent := ""
+	if choices, ok := data["choices"].([]interface{}); ok && len(choices) > 0 {
+		if choice, ok := choices[0].(map[string]interface{}); ok {
+			if message, ok := choice["message"].(map[string]interface{}); ok {
+				if content, ok := message["content"].(string); ok {
+					messageContent = content
+				}
+			}
+		}
+	}
+
+	return messageContent, nil
 }
 
 func (fpm *FocusPointManager) refineMainContent(content string) (string, error) {
@@ -195,8 +206,7 @@ func (fpm *FocusPointManager) refineCoordContent(content string, filteredMainCon
 			"coord":   value,
 		}
 	}
-
-	changedJSONBytes, err := json.MarshalIndent(changeJsonData, "", "  ")
+	changedJSONBytes, err := json.Marshal(changeJsonData)
 	if err != nil {
 		fmt.Println("Error encoding JSON:", err)
 		return []byte("{}"), err
