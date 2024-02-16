@@ -2,7 +2,9 @@ package imagetovideo
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
+	"time"
 
 	"gocv.io/x/gocv"
 )
@@ -12,6 +14,17 @@ func (vm *VideoManager) makeReversedVideo() (string, error) {
 	inputFilePath := filepath.Join(vm.userFolderPath, "generated_video.mp4")
 	outFilePath := filepath.Join(vm.userFolderPath, "reversed_video.mp4")
 	deleteFile(outFilePath)
+
+	// wait inputFilePath
+	for {
+		_, err := os.Stat(inputFilePath)
+		if err == nil {
+			fmt.Printf("Find file!!: %s\n", inputFilePath)
+			break
+		}
+		fmt.Println("The file is not created. try again after 3 sec.")
+		time.Sleep(3 * time.Second)
+	}
 
 	// create video capture input file
 	cap, err := gocv.VideoCaptureFile(inputFilePath)

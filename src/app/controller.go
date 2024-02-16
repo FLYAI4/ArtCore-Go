@@ -15,7 +15,12 @@ func StreamController() {
 		return
 	}
 
-	grpcServer := grpc.NewServer()
+	// issue : https://github.com/tensorflow/serving/issues/1382
+	serverOptions := []grpc.ServerOption{
+		grpc.MaxRecvMsgSize(50 * 1024 * 1024), // 50MB
+	}
+
+	grpcServer := grpc.NewServer(serverOptions...)
 	pb.RegisterStreamServiceServer(grpcServer, &server{})
 
 	fmt.Println("Server is listening on port 50051...")

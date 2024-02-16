@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	StreamService_GeneratedContentStream_FullMethodName = "/pb.StreamService/GeneratedContentStream"
+	StreamService_VideoContentStream_FullMethodName     = "/pb.StreamService/VideoContentStream"
 )
 
 // StreamServiceClient is the client API for StreamService service.
@@ -28,6 +29,8 @@ const (
 type StreamServiceClient interface {
 	// Focus point method
 	GeneratedContentStream(ctx context.Context, in *Request, opts ...grpc.CallOption) (StreamService_GeneratedContentStreamClient, error)
+	// video content method
+	VideoContentStream(ctx context.Context, in *VideoRequest, opts ...grpc.CallOption) (StreamService_VideoContentStreamClient, error)
 }
 
 type streamServiceClient struct {
@@ -70,12 +73,46 @@ func (x *streamServiceGeneratedContentStreamClient) Recv() (*Response, error) {
 	return m, nil
 }
 
+func (c *streamServiceClient) VideoContentStream(ctx context.Context, in *VideoRequest, opts ...grpc.CallOption) (StreamService_VideoContentStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &StreamService_ServiceDesc.Streams[1], StreamService_VideoContentStream_FullMethodName, opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &streamServiceVideoContentStreamClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type StreamService_VideoContentStreamClient interface {
+	Recv() (*Response, error)
+	grpc.ClientStream
+}
+
+type streamServiceVideoContentStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *streamServiceVideoContentStreamClient) Recv() (*Response, error) {
+	m := new(Response)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // StreamServiceServer is the server API for StreamService service.
 // All implementations must embed UnimplementedStreamServiceServer
 // for forward compatibility
 type StreamServiceServer interface {
 	// Focus point method
 	GeneratedContentStream(*Request, StreamService_GeneratedContentStreamServer) error
+	// video content method
+	VideoContentStream(*VideoRequest, StreamService_VideoContentStreamServer) error
 	mustEmbedUnimplementedStreamServiceServer()
 }
 
@@ -85,6 +122,9 @@ type UnimplementedStreamServiceServer struct {
 
 func (UnimplementedStreamServiceServer) GeneratedContentStream(*Request, StreamService_GeneratedContentStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method GeneratedContentStream not implemented")
+}
+func (UnimplementedStreamServiceServer) VideoContentStream(*VideoRequest, StreamService_VideoContentStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method VideoContentStream not implemented")
 }
 func (UnimplementedStreamServiceServer) mustEmbedUnimplementedStreamServiceServer() {}
 
@@ -120,6 +160,27 @@ func (x *streamServiceGeneratedContentStreamServer) Send(m *Response) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _StreamService_VideoContentStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(VideoRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(StreamServiceServer).VideoContentStream(m, &streamServiceVideoContentStreamServer{stream})
+}
+
+type StreamService_VideoContentStreamServer interface {
+	Send(*Response) error
+	grpc.ServerStream
+}
+
+type streamServiceVideoContentStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *streamServiceVideoContentStreamServer) Send(m *Response) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // StreamService_ServiceDesc is the grpc.ServiceDesc for StreamService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -131,6 +192,11 @@ var StreamService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "GeneratedContentStream",
 			Handler:       _StreamService_GeneratedContentStream_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "VideoContentStream",
+			Handler:       _StreamService_VideoContentStream_Handler,
 			ServerStreams: true,
 		},
 	},

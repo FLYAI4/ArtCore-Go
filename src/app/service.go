@@ -44,7 +44,6 @@ func (s *server) GeneratedContentStream(req *pb.Request, stream pb.StreamService
 	}
 
 	// save image to storage/{id}/origin_img.jpg
-	fmt.Printf("Image %s\n", string(req.Image))
 	err = os.WriteFile(filepath.Join(userFolderPath, "origin_img.jpg"), req.Image, 0644)
 	if err != nil {
 		fmt.Println("Error to wirte image. : ", err)
@@ -62,6 +61,28 @@ func (s *server) GeneratedContentStream(req *pb.Request, stream pb.StreamService
 	go vm.GenerateVideoContent(&wg, stream)
 
 	wg.Wait()
+	return nil
+}
+
+func (s *server) VideoContentStream(req *pb.VideoRequest, stream pb.StreamService_VideoContentStreamServer) error {
+	// get env
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("Error to load env.")
+		return nil
+	}
+
+	storagePath := "./storage"
+	userFolderPath := filepath.Join(storagePath, req.Id)
+	stabilityAiToken := os.Getenv("STABILITY_AI_TOKEN_KEY")
+
+	// generate image to video content
+	vm := imagetovideo.NewVideoManager(userFolderPath, stabilityAiToken)
+	vm.GetVideoContent(stream)
+
+	if err := stream.Send(&pb.Response{Tag: "status", Data: []byte("finished")}); err != nil {
+		fmt.Println("Failed to send response: ", err)
+	}
 
 	return nil
 }

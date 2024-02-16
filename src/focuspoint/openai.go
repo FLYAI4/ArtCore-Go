@@ -50,6 +50,10 @@ func (fpm *FocusPointManager) GenerateFocusPointContent(wg *sync.WaitGroup, stre
 	if err := stream.Send(&pb.Response{Tag: "coord", Data: coorContent}); err != nil {
 		fmt.Println("Failed to send response: ", err)
 	}
+
+	if err := stream.Send(&pb.Response{Tag: "status", Data: []byte("finished")}); err != nil {
+		fmt.Println("Failed to send response: ", err)
+	}
 	wg.Done()
 }
 

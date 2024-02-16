@@ -36,42 +36,48 @@ func NewVideoManager(userFolderPath string, token string) *VideoManager {
 }
 
 // Generate video content with StabilityAI and openCV.
-func (vm *VideoManager) GenerateVideoContent(wg *sync.WaitGroup, stream pb.StreamService_GeneratedContentStreamServer) {
+func (vm *VideoManager) GenerateVideoContent(wg *sync.WaitGroup, stream pb.StreamService_GeneratedContentStreamServer) error {
 	// resize image to 768 * 768
 	_, err := vm.resizeImage()
 	if err != nil {
 		fmt.Println("Resize image error: ", err)
+		return err
 	}
 	// post generated video to stability AI
-	_, err = vm.postGenerateVideo()
+	id, err := vm.postGenerateVideo()
 	if err != nil {
 		fmt.Println("Post generate video error: ", err)
+		return err
 	}
 
-	// // get generated video from stability AI
-	// _, err = vm.getGenerateVideo(id)
-	// if err != nil {
-	// 	fmt.Println("Get generate video error: ", err)
-	// }
-	// // make long reversed video to openCV
-	// _, err = vm.makeReversedVideo()
-	// if err != nil {
-	// 	fmt.Println("Make reversed video error: ", err)
-	// }
+	// TODO : Front에서 응답을 종료할 수 있는지 확인!!
+	// get generated video from stability AI
+	_, err = vm.getGenerateVideo(id)
+	if err != nil {
+		fmt.Println("Get generate video error: ", err)
+	}
+	wg.Done()
+	return nil
+}
+
+func (vm *VideoManager) GetVideoContent(stream pb.StreamService_VideoContentStreamServer) {
+	// make long reversed video to openCV
+	outFilePath, err := vm.makeReversedVideo()
+	if err != nil {
+		fmt.Println("Make reversed video error: ", err)
+	}
 
 	// TODO : send video 별도 api로 수정
 	// read video to byte
-	// videoBytes, err := os.ReadFile(outFilePath)
-	// if err != nil {
-	// 	fmt.Println("Failed to read video error: ", err)
-	// }
+	videoBytes, err := os.ReadFile(outFilePath)
+	if err != nil {
+		fmt.Println("Failed to read video error: ", err)
+	}
 
-	// // send: video content
-	// if err := stream.Send(&pb.Response{Tag: "video", Data: []byte("finished")}); err != nil {
-	// 	fmt.Println("Failed to send response: ", err)
-	// }
-
-	wg.Done()
+	// send: video content
+	if err := stream.Send(&pb.Response{Tag: "video", Data: videoBytes}); err != nil {
+		fmt.Println("Failed to send response: ", err)
+	}
 }
 
 // Resize image to fit (768, 768)
@@ -222,6 +228,7 @@ func (vm *VideoManager) getGenerateVideo(generatedID string) (string, error) {
 
 	var flag int = 202
 	url := fmt.Sprintf("https://api.stability.ai/v2alpha/generation/image-to-video/result/%s", generatedID)
+	fmt.Println(url)
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Println("Can't create new request.", err)
@@ -261,6 +268,9 @@ func (vm *VideoManager) getGenerateVideo(generatedID string) (string, error) {
 			fmt.Println("Generation in-progress... automatically try again after 5 sec.")
 			time.Sleep(5 * time.Second)
 		default:
+			//
+			fmt.Println(response.Status)
+			//
 			fmt.Println("Can't connect api.", err)
 			var errorMessage map[string]interface{}
 			err = json.NewDecoder(response.Body).Decode(&errorMessage)
