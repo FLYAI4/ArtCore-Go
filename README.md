@@ -13,7 +13,7 @@ To run the service, follow the instructions below:
 1. Clone the repository:
 
 ```sh
-git clone https://github.com/username/ArtCore-Go.git
+git clone https://github.com/robert-min/ArtCore-Go.git
 ```
 
 2. Navigate to the project directory:
