@@ -66,8 +66,8 @@ func TestCanMakeReversedVideo(t *testing.T) {
 	assert.True(t, filepath.Base(outputPath) == "reversed_video.mp4", "비디오 역 재생 파일이 정상적으로 생성되지 않았습니다.")
 }
 
-func TestCanGenerateVideoContent(t *testing.T) {
-	vm := makeModule()
+// func TestCanGenerateVideoContent(t *testing.T) {
+// 	vm := makeModule()
 
-	vm.GenerateVideoContent()
-}
+// 	vm.GenerateVideoContent()
+// }

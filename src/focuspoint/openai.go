@@ -5,11 +5,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+
+	"github.com/robert-min/ArtCore-Go/src/pb"
 )
 
 type FocusPointManager struct {
@@ -24,7 +27,7 @@ func NewFocusPointManager(userFolderPath string, token string) *FocusPointManage
 	}
 }
 
-func (fpm *FocusPointManager) GenerateFocusPointContent() {
+func (fpm *FocusPointManager) GenerateFocusPointContent(wg *sync.WaitGroup, stream pb.StreamService_GeneratedContentStreamServer) {
 	content, err := fpm.postGenerateContent()
 	if err != nil {
 		fmt.Println("Post generateContent error: ", err)
@@ -34,16 +37,24 @@ func (fpm *FocusPointManager) GenerateFocusPointContent() {
 	if err != nil {
 		fmt.Println("Refine mainContent error: ", err)
 	}
-	// TODO: mainContent 전송(byte 타입으로)
-	fmt.Println(mainContent)
+	// send: mainContent
+	if err := stream.Send(&pb.Response{Tag: "content", Data: []byte(mainContent)}); err != nil {
+		fmt.Println("Failed to send response: ", err)
+	}
 
 	coorContent, err := fpm.refineCoordContent(content, mainContent)
 	if err != nil {
 		fmt.Println("Refine coordContent error: ", err)
 	}
-	// TODO: coordContent 전송
-	fmt.Println(string(coorContent))
+	// send: coordContent
+	if err := stream.Send(&pb.Response{Tag: "coord", Data: coorContent}); err != nil {
+		fmt.Println("Failed to send response: ", err)
+	}
 
+	if err := stream.Send(&pb.Response{Tag: "status", Data: []byte("finished")}); err != nil {
+		fmt.Println("Failed to send response: ", err)
+	}
+	wg.Done()
 }
 
 func (fpm *FocusPointManager) postGenerateContent() (string, error) {
@@ -57,7 +68,7 @@ func (fpm *FocusPointManager) postGenerateContent() (string, error) {
 	defer file.Close()
 
 	// read file
-	imageData, err := ioutil.ReadAll(file)
+	imageData, err := io.ReadAll(file)
 	if err != nil {
 		fmt.Println("Can't read the file.", err)
 		return "", err
@@ -118,12 +129,12 @@ func (fpm *FocusPointManager) postGenerateContent() (string, error) {
 	if response.StatusCode == 400 {
 		fmt.Println("Can't request to OpenAI with non image.")
 		return "", fmt.Errorf("non image")
-	} else if response.StatusCode == 404 {
+	} else if response.StatusCode == 429 {
 		fmt.Println("Can't request to OpenAI with non token.")
 		return "", fmt.Errorf("non token")
 	}
 
-	responseData, err := ioutil.ReadAll(response.Body)
+	responseData, err := io.ReadAll(response.Body)
 	if err != nil {
 		fmt.Println("Can't read reponse body.", err)
 		return "", err
@@ -134,9 +145,20 @@ func (fpm *FocusPointManager) postGenerateContent() (string, error) {
 		fmt.Println("Can't parse json data.", err)
 		return "", err
 	}
+
 	// ['choices'][0]["message"]["content"]
-	messageContent := data["choices"].([]interface{})[0].(map[string]interface{})["message"].(map[string]interface{})["content"]
-	return messageContent.(string), nil
+	messageContent := ""
+	if choices, ok := data["choices"].([]interface{}); ok && len(choices) > 0 {
+		if choice, ok := choices[0].(map[string]interface{}); ok {
+			if message, ok := choice["message"].(map[string]interface{}); ok {
+				if content, ok := message["content"].(string); ok {
+					messageContent = content
+				}
+			}
+		}
+	}
+
+	return messageContent, nil
 }
 
 func (fpm *FocusPointManager) refineMainContent(content string) (string, error) {
@@ -160,7 +182,7 @@ func (fpm *FocusPointManager) refineCoordContent(content string, filteredMainCon
 	startIndex := strings.Index(content, "```json")
 	if startIndex == -1 {
 		fmt.Println("Start index not found.")
-		return nil, fmt.Errorf("no json format error")
+		return []byte("{}"), fmt.Errorf("no json format error")
 	}
 	startIndex += 7
 
@@ -168,7 +190,7 @@ func (fpm *FocusPointManager) refineCoordContent(content string, filteredMainCon
 	endIndex := strings.Index(content[startIndex:], "```")
 	if endIndex == -1 {
 		fmt.Println("End index not found")
-		return nil, fmt.Errorf("no json format error")
+		return []byte("{}"), fmt.Errorf("no json format error")
 	}
 
 	// decode json
@@ -177,7 +199,7 @@ func (fpm *FocusPointManager) refineCoordContent(content string, filteredMainCon
 	var jsonData map[string]interface{}
 	if err := json.Unmarshal([]byte(jsonStr), &jsonData); err != nil {
 		fmt.Println("Error decoding JSON:", err)
-		return nil, err
+		return []byte("{}"), err
 	}
 
 	// make coord content
@@ -188,11 +210,10 @@ func (fpm *FocusPointManager) refineCoordContent(content string, filteredMainCon
 			"coord":   value,
 		}
 	}
-
-	changedJSONBytes, err := json.MarshalIndent(changeJsonData, "", "  ")
+	changedJSONBytes, err := json.Marshal(changeJsonData)
 	if err != nil {
 		fmt.Println("Error encoding JSON:", err)
-		return nil, err
+		return []byte("{}"), err
 	}
 	return changedJSONBytes, nil
 
