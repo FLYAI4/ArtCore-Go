@@ -26,7 +26,7 @@ func (s *server) GeneratedContentStream(req *pb.Request, stream pb.StreamService
 	}
 
 	openAiToken := os.Getenv("OPEN_AI_KEY")
-	stabilityAiToken := os.Getenv("STABILITY_AI_TOKEN_KEY")
+	// stabilityAiToken := os.Getenv("STABILITY_AI_TOKEN_KEY")
 
 	// make folder
 	storagePath := "./storage"
@@ -51,7 +51,7 @@ func (s *server) GeneratedContentStream(req *pb.Request, stream pb.StreamService
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(2)
 
 	// generate loading gif content
 	lm := loading.NewLoadingManager(userFolderPath)
@@ -62,8 +62,8 @@ func (s *server) GeneratedContentStream(req *pb.Request, stream pb.StreamService
 	go fpm.GenerateFocusPointContent(&wg, stream)
 
 	// generate image to video content
-	vm := imagetovideo.NewVideoManager(userFolderPath, stabilityAiToken)
-	go vm.GenerateVideoContent(&wg, stream)
+	// vm := imagetovideo.NewVideoManager(userFolderPath, stabilityAiToken)
+	// go vm.GenerateVideoContent(&wg, stream)
 
 	wg.Wait()
 	return nil

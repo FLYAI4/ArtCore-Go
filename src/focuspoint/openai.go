@@ -13,6 +13,7 @@ import (
 	"sync"
 
 	"github.com/robert-min/ArtCore-Go/src/pb"
+	"github.com/robert-min/ArtCore-Go/src/tts"
 )
 
 type FocusPointManager struct {
@@ -50,11 +51,25 @@ func (fpm *FocusPointManager) GenerateFocusPointContent(wg *sync.WaitGroup, stre
 	if err := stream.Send(&pb.Response{Tag: "coord", Data: coorContent}); err != nil {
 		fmt.Println("Failed to send response: ", err)
 	}
+	fmt.Println("Finsish focus point.")
 
+	// send audio content
+	am := tts.NewAudioManager(fpm.userFolderPath, fpm.token)
+	audioBytes, err := am.GetAudioContent(mainContent)
+	if err != nil {
+		fmt.Println("Failed to get audio conent: ", err)
+	}
+	if err := stream.Send(&pb.Response{Tag: "audio", Data: audioBytes}); err != nil {
+		fmt.Println("Failed to send response: ", err)
+	}
+	fmt.Println("Finsish tts.")
+
+	// send: finish
 	if err := stream.Send(&pb.Response{Tag: "finish", Data: []byte("finished")}); err != nil {
 		fmt.Println("Failed to send response: ", err)
 	}
-	fmt.Println("Finsish focus point.")
+
+	fmt.Println("Finsish gRPC")
 	wg.Done()
 }
 

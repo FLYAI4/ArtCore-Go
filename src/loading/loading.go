@@ -51,6 +51,7 @@ func (lm *LoadingManager) GetLodingGif(wg *sync.WaitGroup, stream pb.StreamServi
 		fmt.Println("Failed to send response: ", err)
 	}
 
+	fmt.Println("Finsish gRPC")
 	wg.Done()
 	return nil
 }

@@ -22,13 +22,29 @@ func NewAudioManager(userFolderPath string, token string) *AudioManager {
 	}
 }
 
-func (am *AudioManager) GetAudioContent(text string) error {
-	_, err := am.generateTts(text)
+func (am *AudioManager) GetAudioContent(text string) ([]byte, error) {
+	filepath, err := am.generateTts(text)
 	if err != nil {
 		fmt.Println("Error to generate tts. : ", err)
-		return err
+		return nil, err
 	}
-	return nil
+
+	audioBytes, err := am.getAudioFile(filepath)
+	if err != nil {
+		fmt.Println("Error to get audio file. : ", err)
+		return nil, err
+	}
+
+	return audioBytes, nil
+}
+
+func (am *AudioManager) getAudioFile(filepath string) ([]byte, error) {
+	audioBytes, err := os.ReadFile(filepath)
+	if err != nil {
+		fmt.Println("Failed to read video error: ", err)
+		return nil, err
+	}
+	return audioBytes, nil
 }
 
 func (am *AudioManager) generateTts(text string) (string, error) {
