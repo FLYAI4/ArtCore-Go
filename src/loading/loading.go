@@ -8,7 +8,9 @@ import (
 	"image/gif"
 	"os"
 	"path/filepath"
+	"sync"
 
+	"github.com/robert-min/ArtCore-Go/src/pb"
 	"gocv.io/x/gocv"
 )
 
@@ -21,23 +23,35 @@ type LoadingManager struct {
 func NewLoadingManager(userFolderPath string) *LoadingManager {
 	return &LoadingManager{
 		userFolderPath: userFolderPath,
-		growthRate:     float64(0.01),
+		growthRate:     float64(0.015),
 		background:     "black",
 	}
 }
 
-func (lm *LoadingManager) GetLodingGif() error {
+func (lm *LoadingManager) GetLodingGif(wg *sync.WaitGroup, stream pb.StreamService_GeneratedContentStreamServer) error {
 	videoFrames, err := lm.generateSobelFrame()
 	if err != nil {
 		fmt.Println("Generate sobel frame error : ", err)
 		return err
 	}
 
-	_, err = lm.generateGif(videoFrames)
+	gifFilePath, err := lm.generateGif(videoFrames)
 	if err != nil {
 		fmt.Println("Genreate gif error : ", err)
 		return err
 	}
+
+	gifBytes, err := os.ReadFile(gifFilePath)
+	if err != nil {
+		fmt.Println("Failed to read gif error: ", err)
+	}
+
+	// send: gif content
+	if err := stream.Send(&pb.Response{Tag: "gif", Data: gifBytes}); err != nil {
+		fmt.Println("Failed to send response: ", err)
+	}
+
+	wg.Done()
 	return nil
 }
 

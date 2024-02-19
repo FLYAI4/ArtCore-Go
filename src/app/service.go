@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/robert-min/ArtCore-Go/src/focuspoint"
 	"github.com/robert-min/ArtCore-Go/src/imagetovideo"
+	"github.com/robert-min/ArtCore-Go/src/loading"
 	"github.com/robert-min/ArtCore-Go/src/pb"
 )
 
@@ -50,7 +51,11 @@ func (s *server) GeneratedContentStream(req *pb.Request, stream pb.StreamService
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(3)
+
+	// generate loading gif content
+	lm := loading.NewLoadingManager(userFolderPath)
+	go lm.GetLodingGif(&wg, stream)
 
 	// generate focus point content
 	fpm := focuspoint.NewFocusPointManager(userFolderPath, openAiToken)

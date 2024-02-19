@@ -38,7 +38,7 @@ func (fpm *FocusPointManager) GenerateFocusPointContent(wg *sync.WaitGroup, stre
 		fmt.Println("Refine mainContent error: ", err)
 	}
 	// send: mainContent
-	if err := stream.Send(&pb.Response{Tag: "content", Data: []byte(mainContent)}); err != nil {
+	if err := stream.Send(&pb.Response{Tag: "text", Data: []byte(mainContent)}); err != nil {
 		fmt.Println("Failed to send response: ", err)
 	}
 
@@ -51,9 +51,10 @@ func (fpm *FocusPointManager) GenerateFocusPointContent(wg *sync.WaitGroup, stre
 		fmt.Println("Failed to send response: ", err)
 	}
 
-	if err := stream.Send(&pb.Response{Tag: "status", Data: []byte("finished")}); err != nil {
+	if err := stream.Send(&pb.Response{Tag: "finish", Data: []byte("finished")}); err != nil {
 		fmt.Println("Failed to send response: ", err)
 	}
+	fmt.Println("Finsish focus point.")
 	wg.Done()
 }
 
@@ -193,6 +194,7 @@ func (fpm *FocusPointManager) refineCoordContent(content string, filteredMainCon
 		return []byte("{}"), fmt.Errorf("no json format error")
 	}
 
+	// TODO : 콘텐츠 생성 시 coord_content 못 찾을 경우 예외 발생 !!
 	// decode json
 	jsonStr := content[startIndex : startIndex+endIndex]
 	jsonStr = strings.ReplaceAll(jsonStr, "\n", "")
