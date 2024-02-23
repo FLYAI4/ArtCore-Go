@@ -24,7 +24,7 @@ func NewLoadingManager(userFolderPath string) *LoadingManager {
 	return &LoadingManager{
 		userFolderPath: userFolderPath,
 		growthRate:     float64(0.015),
-		background:     "black",
+		background:     "white",
 	}
 }
 
