@@ -64,11 +64,6 @@ func (fpm *FocusPointManager) GenerateFocusPointContent(wg *sync.WaitGroup, stre
 	}
 	fmt.Println("Finsish tts.")
 
-	// send: finish
-	if err := stream.Send(&pb.Response{Tag: "finish", Data: []byte("finished")}); err != nil {
-		fmt.Println("Failed to send response: ", err)
-	}
-
 	fmt.Println("Finsish gRPC")
 	wg.Done()
 }
