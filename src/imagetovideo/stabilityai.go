@@ -56,11 +56,7 @@ func (vm *VideoManager) GenerateVideoContent(wg *sync.WaitGroup, stream pb.Strea
 	if err != nil {
 		fmt.Println("Get generate video error: ", err)
 	}
-	wg.Done()
-	return nil
-}
 
-func (vm *VideoManager) GetVideoContent(stream pb.StreamService_VideoContentStreamServer) {
 	// make long reversed video to openCV
 	outFilePath, err := vm.makeReversedVideo()
 	if err != nil {
@@ -78,7 +74,35 @@ func (vm *VideoManager) GetVideoContent(stream pb.StreamService_VideoContentStre
 	if err := stream.Send(&pb.Response{Tag: "video", Data: videoBytes}); err != nil {
 		fmt.Println("Failed to send response: ", err)
 	}
+
+	// send: finish
+	if err := stream.Send(&pb.Response{Tag: "finish", Data: []byte("finished")}); err != nil {
+		fmt.Println("Failed to send response: ", err)
+	}
+
+	wg.Done()
+	return nil
 }
+
+// func (vm *VideoManager) GetVideoContent(stream pb.StreamService_VideoContentStreamServer) {
+// 	// make long reversed video to openCV
+// 	outFilePath, err := vm.makeReversedVideo()
+// 	if err != nil {
+// 		fmt.Println("Make reversed video error: ", err)
+// 	}
+
+// 	// TODO : send video 별도 api로 수정
+// 	// read video to byte
+// 	videoBytes, err := os.ReadFile(outFilePath)
+// 	if err != nil {
+// 		fmt.Println("Failed to read video error: ", err)
+// 	}
+
+// 	// send: video content
+// 	if err := stream.Send(&pb.Response{Tag: "video", Data: videoBytes}); err != nil {
+// 		fmt.Println("Failed to send response: ", err)
+// 	}
+// }
 
 // Resize image to fit (768, 768)
 func (vm *VideoManager) resizeImage() (string, error) {

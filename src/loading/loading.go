@@ -24,7 +24,7 @@ func NewLoadingManager(userFolderPath string) *LoadingManager {
 	return &LoadingManager{
 		userFolderPath: userFolderPath,
 		growthRate:     float64(0.015),
-		background:     "black",
+		background:     "white",
 	}
 }
 
@@ -51,7 +51,7 @@ func (lm *LoadingManager) GetLodingGif(wg *sync.WaitGroup, stream pb.StreamServi
 		fmt.Println("Failed to send response: ", err)
 	}
 
-	fmt.Println("Finsish gRPC")
+	fmt.Println("Finsish loading")
 	wg.Done()
 	return nil
 }
